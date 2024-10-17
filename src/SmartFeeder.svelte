@@ -43,6 +43,9 @@
     let showBirdStats = false;
     let birdStats = {};
 
+    let currentDay = new Date();  // Start with the current date
+    let formattedCurrentDay = currentDay.toLocaleDateString();  // Format the current date
+
     // New variables for sorting
     $: sortColumn = 'name';
     $: sortDirection = 'asc';
@@ -84,13 +87,19 @@
             simulateFoodLevelChange();
             const foodConsumed = oldLevel - foodLevel;
 
-            // Update bird stats
-            if (!birdStats[currentBird.name]) {
-                birdStats[currentBird.name] = { dailyVisits: 0, totalVisits: 0, totalFoodConsumed: 0 };
+            if (!birdStats[formattedCurrentDay]) {
+                birdStats[formattedCurrentDay] = {};  // Initialize the day if it doesn't exist
             }
-            birdStats[currentBird.name].dailyVisits++;
-            birdStats[currentBird.name].totalVisits++;
-            birdStats[currentBird.name].totalFoodConsumed += foodConsumed;
+
+            if (!birdStats[formattedCurrentDay][currentBird.name]) {
+                birdStats[formattedCurrentDay][currentBird.name] = { dailyVisits: 0, totalVisits: 0, totalFoodConsumed: 0 ,  visitedDay: new Date().toLocaleDateString()};
+            }
+
+            birdStats[formattedCurrentDay][currentBird.name].dailyVisits++;
+            birdStats[formattedCurrentDay][currentBird.name].totalVisits++;
+            birdStats[formattedCurrentDay][currentBird.name].totalFoodConsumed += foodConsumed;
+
+            birdStats[formattedCurrentDay][currentBird.name].visitedDay = currentDay.toLocaleDateString();// Update the visited day
             
             addNotification(`${currentBird.name} detected! Food level decreased from ${oldLevel}% to ${foodLevel}%`);
             
@@ -219,6 +228,15 @@
         }
     };
 
+    const advanceDay = () => {
+        currentDay.setDate(currentDay.getDate() + 1);  // Advance by one day
+        formattedCurrentDay = currentDay.toLocaleDateString();  // Update the formatted date
+
+        dailyVisits = 0;
+        addNotification(`Day advanced to: ${formattedCurrentDay}`);
+    };
+
+
     // Function to toggle bird stats modal
     const toggleBirdStats = () => {
         showBirdStats = !showBirdStats;
@@ -231,10 +249,12 @@
 
     // Function to get most frequent visitor
     const getMostFrequentVisitor = () => {
-        return Object.entries(birdStats).reduce((max, [name, stats]) => 
+        const statsForToday = birdStats[formattedCurrentDay] || {};
+        return Object.entries(statsForToday).reduce((max, [name, stats]) => 
             stats.totalVisits > (max.stats?.totalVisits || 0) ? {name, stats} : max
         , {}).name || 'N/A';
     };
+
 
     // Function to calculate average food consumption per visit for a bird species
     function getAverageFoodConsumption(stats) {
@@ -251,31 +271,35 @@
         }
     }
 
-    // Function to sort bird stats
-    $: sortedBirdStats = Object.entries(birdStats).sort((a, b) => {
-        const [nameA, statsA] = a;
-        const [nameB, statsB] = b;
+    $: flattenedBirdStats = Object.entries(birdStats).flatMap(([day, stats]) => {
+        return Object.entries(stats).map(([birdName, birdData]) => {
+            return { day, birdName, ...birdData };  // Include day and bird name in each entry
+        });
+    });
+
+    $: sortedBirdStats = flattenedBirdStats.sort((a, b) => {
         let comparison = 0;
 
         switch (sortColumn) {
             case 'name':
-                comparison = nameA.localeCompare(nameB);
+                comparison = a.birdName.localeCompare(b.birdName);
                 break;
             case 'dailyVisits':
-                comparison = statsA.dailyVisits - statsB.dailyVisits;
+                comparison = a.dailyVisits - b.dailyVisits;
                 break;
             case 'totalVisits':
-                comparison = statsA.totalVisits - statsB.totalVisits;
+                comparison = a.totalVisits - b.totalVisits;
                 break;
             case 'avgFoodConsumption':
-                const avgA = parseFloat(getAverageFoodConsumption(statsA));
-                const avgB = parseFloat(getAverageFoodConsumption(statsB));
+                const avgA = parseFloat(getAverageFoodConsumption(a));
+                const avgB = parseFloat(getAverageFoodConsumption(b));
                 comparison = avgA - avgB;
                 break;
         }
 
         return sortDirection === 'asc' ? comparison : -comparison;
     });
+
 </script>
 
 <div class="page-container">
@@ -411,6 +435,10 @@
                         <span class="icon">🔋</span>
                         <span class="button-text">Recharge Battery ({batteryLevel.toFixed(1)}%)</span>
                     </button>
+                    <button on:click={advanceDay} class="control-button">
+                        <span class="icon">📅</span>
+                        <span class="button-text">Advance Day </span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -432,28 +460,36 @@
         <div class="modal-content" on:click|stopPropagation transition:scale>
             <h2>Bird Visit Statistics</h2>
             <table>
-                <tr>
-                    <th on:click={() => toggleSort('name')}>
-                        Bird Species {sortColumn === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </th>
-                    <th on:click={() => toggleSort('dailyVisits')}>
-                        Daily Visits {sortColumn === 'dailyVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </th>
-                    <th on:click={() => toggleSort('totalVisits')}>
-                        Total Visits {sortColumn === 'totalVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </th>
-                    <th on:click={() => toggleSort('avgFoodConsumption')}>
-                        Avg. Food Consumption (%) {sortColumn === 'avgFoodConsumption' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
-                    </th>
-                </tr>
-                {#each sortedBirdStats as [name, stats]}
+                <thead>
                     <tr>
-                        <td>{name}</td>
-                        <td>{stats.dailyVisits}</td>
-                        <td>{stats.totalVisits}</td>
-                        <td>{getAverageFoodConsumption(stats)}%</td>
+                        <th on:click={() => toggleSort('day')}>
+                            Day {sortColumn === 'day' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th on:click={() => toggleSort('name')}>
+                            Bird Species {sortColumn === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th on:click={() => toggleSort('dailyVisits')}>
+                            Daily Visits {sortColumn === 'dailyVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th on:click={() => toggleSort('totalVisits')}>
+                            Total Visits {sortColumn === 'totalVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                        </th>
+                        <th on:click={() => toggleSort('avgFoodConsumption')}>
+                            Avg. Food Consumption (%) {sortColumn === 'avgFoodConsumption' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                        </th>
                     </tr>
-                {/each}
+                </thead>
+                <tbody>
+                    {#each sortedBirdStats as { day, birdName, dailyVisits, totalVisits, totalFoodConsumed }}
+                        <tr>
+                            <td>{day}</td>
+                            <td>{birdName}</td>
+                            <td>{dailyVisits}</td>
+                            <td>{totalVisits}</td>
+                            <td>{getAverageFoodConsumption({ totalFoodConsumed, totalVisits })}%</td>
+                        </tr>
+                    {/each}
+                </tbody>
             </table>
             <p>Total Visits: {getTotalVisits()}</p>
             <p>Most Frequent Visitor: {getMostFrequentVisitor()}</p>
@@ -461,6 +497,7 @@
         </div>
     </div>
 {/if}
+
 
 <style>
     :global(body) {
