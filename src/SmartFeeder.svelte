@@ -60,7 +60,7 @@
     }
 
     onMount(() => {
-        dailyVisits = Math.floor(Math.random() * 10);
+        // dailyVisits = Math.floor(Math.random() * 10);
         temperature = Math.floor(Math.random() * 30) + 60;
 
         simulateTimePassing();
@@ -126,7 +126,7 @@
         foodLevel = Math.max(0, foodLevel - consumption);
         if (foodLevel === 0) {
             addNotification("Feeder is empty! Please refill.");
-            birdDetected = false;
+            // birdDetected = false;
             currentBird = '';
         }
     };
@@ -365,6 +365,7 @@
                     {isRefilling}
                     {isCleaning}
                     {isRecharging}
+                    {batteryLevel}
                 />
             </div>
 

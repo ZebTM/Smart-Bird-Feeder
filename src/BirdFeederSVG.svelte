@@ -8,6 +8,7 @@
     export let currentBird = null;
     export let isCleaning = false;
     export let isRecharging = false;
+    export let batteryLevel = 100;
 
     let birdPosition = spring({ x: 150, y: 150 }, { stiffness: 0.1, damping: 0.25 });
     let raindrops = [];
@@ -240,6 +241,18 @@
             </path>
         </g>
     {/if}
+    
+
+    <!-- Battery Model -->
+    <rect x="52" y="125" width="6" height="50" fill="black" />
+  
+    <!-- Foreground (filled part) based on the power level -->
+    <rect x="52" y="125" width="6" height={ 0.5 * batteryLevel} fill="green" />
+
+    <!-- Lines for the battery -->
+    <line x1="52" y1="137" x2="58" y2="137" stroke="black" stroke-width="1" />
+    <line x1="52" y1="150" x2="58" y2="150" stroke="black" stroke-width="1" />
+    <line x1="52" y1="162" x2="58" y2="162" stroke="black" stroke-width="1" />
 </svg>
 
 <style>
