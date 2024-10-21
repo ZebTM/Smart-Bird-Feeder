@@ -249,13 +249,33 @@
     };
 
     const advanceDay = () => {
+        const previousDay = formattedCurrentDay;  // Save the current day before advancing
+
         currentDay.setDate(currentDay.getDate() + 1);  // Advance by one day
         formattedCurrentDay = currentDay.toLocaleDateString();  // Update the formatted date
 
-        dailyVisits = 0;
+        // If bird stats for the new day haven't been initialized, carry over the total visits from the previous day
+        if (!birdStats[formattedCurrentDay]) {
+            birdStats[formattedCurrentDay] = {};  // Initialize the new day stats
+        }
+
+        // Loop through each bird from the previous day and carry over the total visits
+        for (let birdName in birdStats[previousDay]) {
+            const previousDayStats = birdStats[previousDay][birdName];
+
+            if (!birdStats[formattedCurrentDay][birdName]) {
+                // Initialize stats for the bird on the new day if it doesn't exist
+                birdStats[formattedCurrentDay][birdName] = { dailyVisits: 0, totalVisits: 0, totalFoodConsumed: 0 };
+            }
+
+            // Carry over the total visits and food consumption from the previous day
+            birdStats[formattedCurrentDay][birdName].totalVisits = previousDayStats.totalVisits;
+            birdStats[formattedCurrentDay][birdName].totalFoodConsumed = previousDayStats.totalFoodConsumed;
+        }
+
+        dailyVisits = 0;  // Reset overall daily visits (for UI purposes)
         addNotification(`Day advanced to: ${formattedCurrentDay}`);
     };
-
 
     // Function to toggle bird stats modal
     const toggleBirdStats = () => {
@@ -264,7 +284,8 @@
 
     // Function to get total visits
     const getTotalVisits = () => {
-        return Object.values(birdStats).reduce((total, bird) => total + bird.totalVisits, 0);
+        const statsForToday = birdStats[formattedCurrentDay] || {};  // Get stats for the current day
+        return Object.values(statsForToday).reduce((total, birdData) => total + birdData.totalVisits, 0);
     };
 
     // Function to get most frequent visitor
@@ -496,7 +517,7 @@
                             Daily Visits {sortColumn === 'dailyVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                         </th>
                         <th on:click={() => toggleSort('totalVisits')}>
-                            Total Visits {sortColumn === 'totalVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+                            Total Visits To Date {sortColumn === 'totalVisits' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
                         </th>
                         <th on:click={() => toggleSort('avgFoodConsumption')}>
                             Avg. Food Consumption (%) {sortColumn === 'avgFoodConsumption' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
