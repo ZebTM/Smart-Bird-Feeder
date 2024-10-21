@@ -4,7 +4,7 @@
     import BirdFeederSVG from './BirdFeederSVG.svelte';
 
     let foodLevel = 100;
-    let birdDetected = false;
+    let birdDetected = true;
     let recording = false;
     let currentBird = '';
     let dailyVisits = 0;
@@ -62,8 +62,15 @@
     onMount(() => {
         dailyVisits = Math.floor(Math.random() * 10);
         temperature = Math.floor(Math.random() * 30) + 60;
-        simulateBatteryDrain();
+
+        simulateTimePassing();
+
+        // simulateBatteryDrain(); // Moved this to time passing, also started to detect birds on timer
     });
+
+    const toggleRecording = () => {
+        recording = !recording;
+    };
 
     const simulateBirdDetection = () => {
         if (batteryLevel === 0) {
@@ -71,13 +78,13 @@
             return;
         }
 
-        if (foodLevel === 0 && !birdDetected) {
+        if (foodLevel === 0) {
             addNotification("Cannot detect birds. Feeder is empty! Please refill.");
             return;
         }
 
-        birdDetected = !birdDetected;
-        recording = birdDetected;
+        // birdDetected = !birdDetected;
+        // recording = birdDetected;
         if (birdDetected) {
             currentBird = birdSpecies[Math.floor(Math.random() * birdSpecies.length)];
             dailyVisits++;
@@ -186,6 +193,19 @@
     }
 
     $: cleanlinessStatus = getCleanlinessStatus(feederCleanliness);
+
+    function simulateTimePassing() {
+        simulateBatteryDrain();
+
+        let birdEncounterInterval = setInterval( () => {
+            let rnd = Math.ceil(Math.random() * 10);
+            if (rnd > 9 && recording) {
+                simulateBirdDetection();
+            }
+        }, 10000 ); // Run every 10 seconds
+
+        
+    }
 
     function simulateBatteryDrain() {
         batteryDrainInterval = setInterval(() => {
@@ -331,13 +351,13 @@
                 <div class="panel status-panel">
                     <h2>Feeder Status</h2>
                     <div class="status-grid">
-                        <div class="status-item">
+                        <!-- <div class="status-item">
                             <div class="icon">🐦</div>
                             <div>
                                 <p class="status-label">Bird Detected</p>
                                 <p class="status-value">{birdDetected ? "Yes" : "No"}</p>
                             </div>
-                        </div>
+                        </div> -->
                         <div class="status-item">
                             <div class="icon">📹</div>
                             <div>
@@ -415,9 +435,13 @@
 
                 <div class="panel controls">
                     <h2>Simulation Controls</h2>
+                    <button on:click={toggleRecording} class="control-button">
+                        <span class="icon">📹</span>
+                        <span class="button-text">{recording ? "Stop Recording" : "Start Recording" }</span>
+                    </button>
                     <button on:click={simulateBirdDetection} class="control-button">
                         <span class="icon">🐦</span>
-                        <span class="button-text">{birdDetected ? "Stop Bird Detection" : "Simulate Bird Detection"}</span>
+                        <span class="button-text">{"Simulate Bird Detection"}</span>
                     </button>
                     <button on:click={refillFood} class="control-button">
                         <span class="icon">🥜</span>
