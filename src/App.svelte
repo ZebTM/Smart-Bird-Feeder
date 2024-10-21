@@ -2,25 +2,25 @@
   import SmartFeeder from './SmartFeeder.svelte';
 </script>
 
-<style>
-  @import './app.css';
+<main>
+  <SmartFeeder />
+</main>
 
-  .app-container {
+<style>
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  main {
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    background-color: var(--bg-color);
   }
 
-  .app-content {
-    width: 90%;
-    max-width: 1200px;
+  :global(.project-info a) {
+    margin-right: 10px;
   }
 </style>
-
-<div class="app-container">
-  <div class="app-content">
-    <SmartFeeder />
-  </div>
-</div>
