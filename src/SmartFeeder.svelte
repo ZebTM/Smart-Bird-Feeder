@@ -346,24 +346,9 @@
 <div class="page-container">
     <header class="project-info">
         <h1>Smart Bird Feeder</h1>
-<<<<<<< Updated upstream
-        <p>By: Bartosz K, Grant G, Zach B</p>
-        <a href="your-project-link" target="_blank">Project Write-Up</a>
-        <button on:click={() => alert("This simulation allows you to test bird detection, food levels, weather changes, and feeder maintenance. Use the controls to interact with the smart bird feeder.")}>
-=======
-<<<<<<< Updated upstream
-        <p>By: Your Name</p>
-        <a href="your-project-link" target="_blank">Project Write-Up</a>
-        <button
-            on:click={() =>
-                alert("Info: This simulates bird detection and food levels.")}
-        >
-=======
         <p>By: Bartosz K, Grant G, Zach B</p>
         <a href="https://sites.google.com/view/zachary-brown-development-site/home/smart-bird-feeder" target="_blank">Project Write-Up</a>
         <button on:click={() => alert("This simulation allows you to test bird detection, food levels, weather changes, and feeder maintenance. Use the controls to interact with the smart bird feeder.")}>
->>>>>>> Stashed changes
->>>>>>> Stashed changes
             Info
         </button>
     </header>
